@@ -1,0 +1,30 @@
+
+## 🌐 URLs de Deploy
+
+Una vez deployado, tendrás acceso a:
+
+- **Vercel**: `https://vitalux-admin.vercel.app`
+- **Netlify**: `https://vitalux-admin.netlify.app`
+- **GitHub Pages**: `https://TU-USUARIO.github.io/vitalux-admin`
+
+## 📱 Prueba en Móvil
+
+1. Abre la URL del deploy en tu celular
+2. En iOS: Safari → Compartir → "Añadir a pantalla de inicio"
+3. En Android: Chrome → Menú → "Añadir a pantalla de inicio"
+
+## 🔄 Actualizaciones
+
+Cada push a `main` actualizará automáticamente:
+- Vercel: Deploy automático
+- Netlify: Deploy automático (si conectas GitHub)
+
+## 📞 Soporte
+
+Para soporte técnico:
+- Email: soporte@vitalux.com
+- Issues: [GitHub Issues](https://github.com/TU-USUARIO/vitalux-admin/issues)
+
+---
+
+**Hecho con ❤️ para Vitalux**
