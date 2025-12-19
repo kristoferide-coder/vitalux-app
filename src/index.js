@@ -6,7 +6,7 @@ const root = ReactDOM.createRoot(
   document.getElementById("root")
 );
 
-// Render sin JSX para evitar el error de sintaxis
+// Render sin JSX
 root.render(
   React.createElement(
     React.StrictMode,
