@@ -1,15 +1,22 @@
+/* Contenedor general */
 .watermark {
   position: relative;
-  z-index: 0;
+  z-index: 1;
 }
 
+/* Marca de agua gigante */
 .watermark::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: url("./assets/logo-vitaluxfit.jpeg") center center / 65% no-repeat fixed;
-  opacity: 0.05;
-  filter: blur(2px);
+  background: url("./assets/logo-vitaluxfit.jpeg") center center / cover no-repeat fixed;
+  opacity: 0.18;          /* Intensidad del logo */
+  filter: blur(1px);      /* Elegante */
   pointer-events: none;
   z-index: -1;
+}
+
+/* Opcional: mejora de texto encima del fondo */
+body {
+  color: white;
 }
