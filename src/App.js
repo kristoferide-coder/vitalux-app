@@ -5,7 +5,7 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <div className="logo">Vitalux</div>
+        <div className="logo">Vitaluxfit</div>
         <nav className="nav">
           <a href="#inicio">Inicio</a>
           <a href="#planes">Planes</a>
@@ -29,7 +29,7 @@ function App() {
             </a>
             <a
               className="btn btn-outline"
-              href="https://wa.me/56XXXXXXXXX"
+              href="https://wa.me/56965235990"
               target="_blank"
               rel="noreferrer"
             >
