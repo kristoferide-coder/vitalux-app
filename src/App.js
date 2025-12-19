@@ -1,7 +1,12 @@
+import './App.css';
+
 function App() {
   return (
     <div className="watermark">
-      {/* todo tu contenido de la app */}
+      <h1>Vitalux funcionando 🚀</h1>
+      <p>Si ves esto, todo sigue ok.</p>
     </div>
   );
 }
+
+export default App;
