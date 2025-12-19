@@ -4,7 +4,7 @@ import "./App.css";
 function App() {
   return (
     <div className="app">
-      <header className="topbar">
+      <header className="header">
         <div className="logo">Vitalux</div>
         <nav className="nav">
           <a href="#inicio">Inicio</a>
@@ -15,30 +15,42 @@ function App() {
       </header>
 
       <main>
-        {/* INICIO */}
-        <section id="inicio" className="section hero">
+        <section id="inicio" className="hero">
           <h1>Vitalux funcionando 🚀</h1>
-          <p className="subtitle">
-            Si ves esto, el deploy resultó y ya podemos construir la app.
+          <p>Si ves esto, el deploy resultó y ya podemos construir la app.</p>
+          <p className="hero-subtitle">
+            Comida lista, sellada al vacío y con macros calculados para que
+            bajes grasa, ganes músculo y no pierdas tiempo cocinando.
           </p>
+
+          <div className="hero-actions">
+            <a className="btn btn-primary" href="#planes">
+              Ver planes
+            </a>
+            <a
+              className="btn btn-outline"
+              href="https://wa.me/56XXXXXXXXX"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Escribir por WhatsApp
+            </a>
+          </div>
+        </section>
+
+        <section id="que-es" className="section">
+          <h2>¿Qué es Vitalux?</h2>
           <p>
-            Vitalux es tu cocina y coach en un solo lugar: comida lista, sellada
-            al vacío, con macros calculados y planes hechos para que bajes
-            grasa, ganes músculo y no pierdas tiempo cocinando.
+            Vitalux es tu cocina y coach en un solo lugar: comida lista una vez
+            por semana, todo sellado al vacío, con planes hechos a medida.
           </p>
         </section>
 
-        {/* PLANES */}
         <section id="planes" className="section">
           <h2>Planes</h2>
-          <p>
-            Estos textos son de ejemplo para que veas cómo se vería la
-            información cuando vendas los planes desde la app.
-          </p>
           <div className="cards">
             <div className="card">
               <h3>Básico</h3>
-              <p>Para quienes quieren partir ordenando la semana.</p>
               <ul>
                 <li>Comidas listas 3 días a la semana</li>
                 <li>Macros aproximados</li>
@@ -48,7 +60,6 @@ function App() {
 
             <div className="card">
               <h3>Medio</h3>
-              <p>Perfecto para ver cambios visibles en 4–8 semanas.</p>
               <ul>
                 <li>Comidas listas 5 días a la semana</li>
                 <li>Macros personalizados</li>
@@ -58,7 +69,6 @@ function App() {
 
             <div className="card">
               <h3>Premium</h3>
-              <p>Todo resuelto: solo comer, entrenar y seguir el plan.</p>
               <ul>
                 <li>Comidas listas 7 días a la semana</li>
                 <li>Sellado al vacío + etiquetado por macros</li>
@@ -68,7 +78,6 @@ function App() {
           </div>
         </section>
 
-        {/* PANEL CLIENTE */}
         <section id="panel-cliente" className="section">
           <h2>Panel Cliente</h2>
           <p>
@@ -78,12 +87,10 @@ function App() {
           <ul>
             <li>Calendario de entregas</li>
             <li>Historial de fotos y mediciones</li>
-            <li>Botón para pedir la próxima semana</li>
+            <li>Botón para pedir la minuta de la semana</li>
           </ul>
-          <p className="tag">Más adelante esto será 100% dinámico.</p>
         </section>
 
-        {/* ADMIN */}
         <section id="admin" className="section">
           <h2>Admin (interno Vitalux)</h2>
           <p>
@@ -92,21 +99,18 @@ function App() {
           </p>
           <ul>
             <li>Listado de clientes y tipo de plan</li>
-            <li>Producción por semana (n° de platos / bolsas)</li>
+            <li>Producción por semana (nº de platos / bolsas)</li>
             <li>Control simple de pagos y estado de cada cliente</li>
           </ul>
-          <p className="tag">
-            Hoy es solo maqueta, después lo conectamos a base de datos.
-          </p>
         </section>
-
-        <footer className="footer">
-          Vitalux · {new Date().getFullYear()} · “Tu vitalidad, nuestro
-          compromiso”.
-        </footer>
       </main>
+
+      <footer className="footer">
+        Vitalux · 2025 · <span>“Tu vitalidad, nuestro compromiso”</span>
+      </footer>
     </div>
   );
 }
 
 export default App;
+         
