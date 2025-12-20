@@ -1,4 +1,4 @@
-import react, { useState } from "react";
+import React, { useState } from "react";
 import "./App.css";
 
 function App() {
@@ -38,7 +38,8 @@ function App() {
             <p className="helper-text">
               Si usas el código <strong>vitaluxadmin</strong> entrarás como
               <strong> administrador</strong>. Cualquier otro código entra como
-              <strong> cliente</strong>. Es solo una prueba por ahora.
+              <strong> cliente</strong>. Esto es solo temporal mientras
+              desarrollamos el sistema real.
             </p>
 
             <form onSubmit={handleSubmit} className="login-form">
@@ -59,7 +60,7 @@ function App() {
                   type="password"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  placeholder="vitaluxadmin o lo que quieras"
+                  placeholder="vitaluxadmin o cualquier cosa"
                 />
               </label>
 
@@ -92,8 +93,9 @@ function App() {
               <div className="logged-box">
                 <h2 className="section-title">Panel Admin</h2>
                 <p>
-                  Aquí construiremos el <strong>panel de administración</strong>{" "}
-                  para cargar minutas, recetas y clientes.
+                  Aquí construiremos el{" "}
+                  <strong>panel de administración</strong> para cargar minutas,
+                  recetas y clientes.
                 </p>
               </div>
             )}
