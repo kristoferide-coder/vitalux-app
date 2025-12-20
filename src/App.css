@@ -23,52 +23,99 @@ body,
   justify-content: center;
   padding: 16px;
 }
+
 /* Tarjeta sobre la imagen */
 .landing-card {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.65);
   border-radius: 18px;
   padding: 24px 20px;
-  max-width: 420px;
-  text-align: center;
+  max-width: 480px;
+  width: 100%;
+  text-align: left;
   color: #ffffff;
   backdrop-filter: blur(4px);
 }
 
 .brand {
-  font-size: 2.2rem;
+  font-size: 2rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .subtitle {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   opacity: 0.9;
   margin-bottom: 16px;
 }
 
-.tagline {
-  font-size: 0.95rem;
-  margin-bottom: 24px;
+.section-title {
+  font-size: 1.2rem;
+  margin-bottom: 4px;
 }
 
-.whatsapp-btn {
-  display: inline-block;
+.helper-text {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  margin-bottom: 12px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.field span {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+.field input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+}
+
+.primary-btn {
+  margin-top: 8px;
   padding: 10px 20px;
   border-radius: 999px;
-  border: 1px solid #f5c249;
-  text-decoration: none;
-  color: #111;
+  border: none;
   background: #f5c249;
+  color: #111;
   font-weight: 600;
-  margin-bottom: 10px;
+  cursor: pointer;
 }
 
-.whatsapp-btn:hover {
+.primary-btn:hover {
   opacity: 0.9;
 }
 
-.contact-note {
-  font-size: 0.8rem;
-  opacity: 0.8;
+.secondary-btn {
+  margin-top: 16px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid #ffffff55;
+  background: transparent;
+  color: #ffffff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.logged-box {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  font-size: 0.9rem;
 }
