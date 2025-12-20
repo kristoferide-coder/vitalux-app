@@ -14,7 +14,7 @@ body,
 
 .app {
   min-height: 100vh;
-  background-image: url("/vitalux-bg.jpg"); /* la imagen que subiste a public */
+  background-image: url("./assets/vitalux-bg.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -23,7 +23,6 @@ body,
   justify-content: center;
   padding: 16px;
 }
-
 /* Tarjeta sobre la imagen */
 .landing-card {
   background: rgba(0, 0, 0, 0.6);
