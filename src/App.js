@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./App.css";
+import bgImage from "./assets/vitalux-bg.jpg";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -27,8 +28,12 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div
+      className="app"
+      style={{ backgroundImage: ⁠ url(${bgImage}) ⁠ }}
+    >
       <div className="landing-card">
+
         {!user && (
           <>
             <h1 className="brand">VitaluxFit</h1>
