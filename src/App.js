@@ -7,10 +7,43 @@ function App() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
 
+  // Plan "falso" de ejemplo para HOY (luego lo sacamos de base de datos)
+  const todayPlan = {
+    dateLabel: "Plan de hoy",
+    meals: [
+      {
+        id: 1,
+        time: "Desayuno",
+        title: "Yogurt griego + frutos rojos",
+        description: "Alto en proteína, bajo en azúcar.",
+        status: "ready",
+        statusText: "Listo"
+      },
+      {
+        id: 2,
+        time: "Almuerzo",
+        title: "Pollo Vitalux con arroz integral",
+        description: "Porción controlada, ideal para energía estable.",
+        status: "ready",
+        statusText: "Listo"
+      },
+      {
+        id: 3,
+        time: "Cena",
+        title: "Salmón al horno + ensalada verde",
+        description: "Omega 3, antiinflamatorio y liviano para dormir.",
+        status: "pending",
+        statusText: "Pendiente"
+      }
+    ],
+    motivation:
+      "Hoy no tienes que pensar qué cocinar, solo seguir el plan. Una comida a la vez y listo 💪."
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Súper simple y temporal:
+    // Temporal:
     // si el código es "vitaluxadmin" => admin, si no => cliente
     if (code === "vitaluxadmin") {
       setUser({ role: "admin", email });
@@ -30,13 +63,12 @@ function App() {
   return (
     <div
       className="app"
-      style={{ backgroundImage: ⁠ url(${bgImage}) ⁠ }}
+      style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div className="landing-card">
-
         {!user && (
           <>
-            <h1 className="brand">VitaluxFit</h1>
+            <h1 className="brand">VITALUXFIT</h1>
             <p className="subtitle">Tu vitalidad, nuestro compromiso.</p>
 
             <h2 className="section-title">Ingresar</h2>
@@ -65,7 +97,7 @@ function App() {
                   type="password"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  placeholder="vitaluxadmin o cualquier cosa"
+                  placeholder="vitaluxadmin o cualquier código"
                 />
               </label>
 
@@ -78,19 +110,37 @@ function App() {
 
         {user && (
           <>
-            <h1 className="brand">VitaluxFit</h1>
+            <h1 className="brand">VITALUXFIT</h1>
             <p className="subtitle">
               Sesión iniciada como{" "}
               {user.role === "admin" ? "Administrador" : "Cliente"}.
             </p>
 
             {user.role === "cliente" && (
-              <div className="logged-box">
-                <h2 className="section-title">Hola, {user.email}</h2>
-                <p>
-                  Aquí después irá tu pantalla{" "}
-                  <strong>“Hoy te toca”</strong> con las comidas del día.
-                </p>
+              <div className="today-box">
+                <div className="today-header">
+                  <h2>Hola, {user.email || "cliente Vitalux"} 👋</h2>
+                  <p className="today-date">{todayPlan.dateLabel}</p>
+                </div>
+
+                <ul className="meals-list">
+                  {todayPlan.meals.map((meal) => (
+                    <li className="meal-item" key={meal.id}>
+                      <div className="meal-time">{meal.time}</div>
+                      <div className="meal-main">
+                        <div className="meal-title">{meal.title}</div>
+                        <div className="meal-note">{meal.description}</div>
+                      </div>
+                      <span
+                        className={`meal-badge meal-badge-${meal.status}`}
+                      >
+                        {meal.statusText}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="motivation">{todayPlan.motivation}</p>
               </div>
             )}
 
