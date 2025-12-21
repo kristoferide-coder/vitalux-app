@@ -14,40 +14,8 @@ function App() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
 
-  // ESTE ES TU ADMIN REAL
+  // ADMIN REAL
   const ADMIN_EMAIL = "vitaluxfit@gmail.com";
-
-  const todayPlan = {
-    dateLabel: "Plan de hoy",
-    meals: [
-      {
-        id: 1,
-        time: "Desayuno",
-        title: "Yogurt griego + frutos rojos",
-        description: "Alto en proteína, bajo en azúcar.",
-        status: "ready",
-        statusText: "Listo",
-      },
-      {
-        id: 2,
-        time: "Almuerzo",
-        title: "Pollo Vitalux con arroz integral",
-        description: "Porción controlada, ideal para energía estable.",
-        status: "ready",
-        statusText: "Listo",
-      },
-      {
-        id: 3,
-        time: "Cena",
-        title: "Salmón al horno + ensalada verde",
-        description: "Omega 3, antiinflamatorio y liviano para dormir.",
-        status: "pending",
-        statusText: "Pendiente",
-      },
-    ],
-    motivation:
-      "Hoy no tienes que pensar qué cocinar, solo seguir el plan. Una comida a la vez y listo 💪.",
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,7 +27,7 @@ function App() {
     }
 
     try {
-      // Intentar iniciar sesión
+      // Intentar login
       const cred = await signInWithEmailAndPassword(auth, email, password);
       const loggedEmail = cred.user.email || email;
       const role = loggedEmail === ADMIN_EMAIL ? "admin" : "cliente";
@@ -93,7 +61,10 @@ function App() {
   };
 
   return (
-    <div className="app" style={{ backgroundImage: ⁠ url(${bgImage}) ⁠ }}>
+    <div
+      className="app"
+      style={{ backgroundImage: "url(" + bgImage + ")" }}
+    >
       <div className="landing-card">
         {!user && (
           <>
@@ -103,7 +74,7 @@ function App() {
             <h2 className="section-title">Ingresar</h2>
             <p className="helper-text">
               Usa tu correo y una contraseña. Si es tu primera vez, crearemos tu
-              cuenta automáticamente.
+              cuenta automaticamente.
             </p>
 
             {authError && <p className="error-text">{authError}</p>}
@@ -127,7 +98,7 @@ function App() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Minimo 6 caracteres"
                 />
               </label>
 
@@ -142,51 +113,32 @@ function App() {
           <>
             <h1 className="brand">VITALUXFIT</h1>
             <p className="subtitle">
-              Sesión iniciada como{" "}
+              Sesion iniciada como{" "}
               {user.role === "admin" ? "Administrador" : "Cliente"}.
             </p>
-
-            {user.role === "cliente" && (
-              <div className="today-box">
-                <div className="today-header">
-                  <h2>Hola, {user.email || "cliente Vitalux"} 👋</h2>
-                  <p className="today-date">{todayPlan.dateLabel}</p>
-                </div>
-
-                <ul className="meals-list">
-                  {todayPlan.meals.map((meal) => (
-                    <li className="meal-item" key={meal.id}>
-                      <div className="meal-time">{meal.time}</div>
-                      <div className="meal-main">
-                        <div className="meal-title">{meal.title}</div>
-                        <div className="meal-note">{meal.description}</div>
-                      </div>
-                      <span
-                        className={⁠ meal-badge meal-badge-${meal.status} ⁠}
-                      >
-                        {meal.statusText}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <p className="motivation">{todayPlan.motivation}</p>
-              </div>
-            )}
 
             {user.role === "admin" && (
               <div className="logged-box">
                 <h2 className="section-title">Panel Admin</h2>
                 <p>
-                  Aquí construiremos el{" "}
-                  <strong>panel de administración</strong> para cargar minutas,
-                  recetas y clientes desde Firebase.
+                  Mas adelante aqui mostraremos el panel para gestionar minutas,
+                  recetas y clientes.
+                </p>
+              </div>
+            )}
+
+            {user.role === "cliente" && (
+              <div className="logged-box">
+                <h2 className="section-title">Panel Cliente</h2>
+                <p>
+                  Bienvenido a tu plan Vitalux. Mas adelante aqui veras tu
+                  minuta diaria y tus comidas.
                 </p>
               </div>
             )}
 
             <button onClick={handleLogout} className="secondary-btn">
-              Cerrar sesión
+              Cerrar sesion
             </button>
           </>
         )}
@@ -195,4 +147,4 @@ function App() {
   );
 }
 
-export default App;     
+export default App;
