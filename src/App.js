@@ -8,6 +8,60 @@ import {
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
+// 👉 Función para convertir el texto en días + comidas
+const parseWeeklyPlan = (planStr) => {
+  if (!planStr) return [];
+
+  const DAYS = [
+    "lunes",
+    "martes",
+    "miércoles",
+    "miercoles",
+    "jueves",
+    "viernes",
+    "sábado",
+    "sabado",
+    "domingo",
+  ];
+
+  const lines = planStr
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l !== "");
+
+  const result = [];
+  let currentDay = null;
+  let currentMeals = [];
+
+  const pushDay = () => {
+    if (currentDay) {
+      result.push({
+        day: currentDay,
+        meals: [...currentMeals],
+      });
+    }
+    currentDay = null;
+    currentMeals = [];
+  };
+
+  lines.forEach((line) => {
+    const lower = line.toLowerCase();
+
+    const foundDay = DAYS.find((d) => lower.startsWith(d));
+    if (foundDay) {
+      // Nueva sección de día
+      pushDay();
+      // Guardamos el texto del día tal como lo escribiste (ej: "Lunes:" o "Lunes - Semana de definición")
+      currentDay = line.replace(/[:\-]+$/, "");
+    } else {
+      currentMeals.push(line);
+    }
+  });
+
+  pushDay();
+  return result;
+};
+
 function App() {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
@@ -25,6 +79,7 @@ function App() {
       } else {
         setUser(null);
         setUserRole(null);
+        setPlan("");
       }
     });
 
@@ -32,19 +87,21 @@ function App() {
   }, []);
 
   // 🔥 Determinar si es ADMIN o CLIENTE
-  const determineRole = async (email) => {
-    if (email === "vitaluxfit@gmail.com") {
+  const determineRole = async (userEmail) => {
+    if (userEmail === "vitaluxfit@gmail.com") {
       setUserRole("admin");
       return;
     }
 
-    const ref = doc(db, "clientes", email);
+    const ref = doc(db, "clientes", userEmail);
     const snap = await getDoc(ref);
 
     if (snap.exists()) {
-      setPlan(snap.data().plan);
+      const data = snap.data();
+      setPlan(data.plan || "");
       setUserRole("cliente");
     } else {
+      setPlan("");
       setUserRole("cliente");
     }
   };
@@ -88,12 +145,22 @@ function App() {
     }
   };
 
+  // 👉 Parsear el plan a estructura semanal
+  const weeklyPlan = parseWeeklyPlan(plan);
+
   return (
     <div className="app-container">
+      {/* ===== LOGIN ===== */}
       {!user && (
         <div className="landing-card">
           <h1 className="brand-title">VITALUXFIT</h1>
           <p>Tu vitalidad, nuestro compromiso.</p>
+
+          <h2>Ingresar</h2>
+          <p className="helper-text">
+            Usa tu correo y una contraseña. Si es tu primera vez, crearemos tu cuenta
+            automáticamente.
+          </p>
 
           <input
             className="input"
@@ -116,31 +183,55 @@ function App() {
         </div>
       )}
 
-      {/* PANEL ADMIN */}
+      {/* ===== PANEL ADMIN ===== */}
       {user && userRole === "admin" && (
         <div className="landing-card">
           <h1 className="brand-title">VITALUXFIT</h1>
           <p>Sesión iniciada como Administrador.</p>
 
           <h2>Panel Admin</h2>
-          <p>Crear o actualizar el plan diario del cliente.</p>
+          <p>
+            Aquí podrás crear y actualizar el <strong>plan semanal</strong> de cada cliente.
+          </p>
+          <p className="helper-text">
+            Formato sugerido:
+            <br />
+            Lunes:
+            <br />
+            Desayuno: ...
+            <br />
+            Almuerzo: ...
+            <br />
+            Cena: ...
+          </p>
 
           <input
             className="input"
-            placeholder="Correo del cliente"
+            placeholder="Correo del cliente (igual que en su login)"
             value={planEmail}
             onChange={(e) => setPlanEmail(e.target.value)}
           />
 
           <textarea
             className="textarea"
-            placeholder="Escribe el plan aquí..."
+            placeholder={`Ejemplo:
+
+Lunes:
+Desayuno: ...
+Almuerzo: ...
+Cena: ...
+
+Martes:
+Desayuno: ...
+Almuerzo: ...
+Cena: ...
+`}
             value={planText}
             onChange={(e) => setPlanText(e.target.value)}
           />
 
           <button className="button" onClick={handleSavePlan}>
-            Guardar plan
+            Guardar plan semanal
           </button>
 
           <button className="button secondary" onClick={handleLogout}>
@@ -149,46 +240,38 @@ function App() {
         </div>
       )}
 
-      {/* PANEL CLIENTE BONITO */}
+      {/* ===== PANEL CLIENTE CON SEMANA COMPLETA ===== */}
       {user && userRole === "cliente" && (
         <div className="landing-card client-panel">
           <h1 className="brand-title">VITALUXFIT</h1>
           <p className="session-label">Sesión iniciada como Cliente.</p>
 
-          <h2 className="section-title">Tu plan de hoy</h2>
+          <h2 className="section-title">Tu semana Vitalux</h2>
           <p className="client-email">Hola, {user.email}</p>
 
-          <div className="plan-cards">
-            {plan &&
-              plan
-                .split("\n")
-                .filter((line) => line.trim() !== "")
-                .map((line, index) => {
-                  const lower = line.toLowerCase();
-                  let tag = "✨ Detalle";
-
-                  if (lower.startsWith("desayuno")) tag = "🥣 Desayuno";
-                  else if (lower.startsWith("almuerzo")) tag = "🍗 Almuerzo";
-                  else if (lower.startsWith("cena")) tag = "🍽 Cena";
-                  else if (lower.startsWith("snack") || lower.startsWith("colación"))
-                    tag = "🍎 Snack";
-
-                  const cleanText = line.replace(/^[^:]+:\s*/, "");
-
-                  return (
-                    <div key={index} className="plan-card">
-                      <span className="plan-tag">{tag}</span>
-                      <p className="plan-text">{cleanText}</p>
-                    </div>
-                  );
-                })}
-
-            {!plan && (
-              <p className="no-plan">
-                Aún no hay plan cargado. Pronto verás aquí tus comidas 💪
-              </p>
-            )}
-          </div>
+          {weeklyPlan.length > 0 ? (
+            <div className="week-grid">
+              {weeklyPlan.map((day, index) => (
+                <div key={index} className="plan-card day-card">
+                  <div className="day-header">
+                    <span className="day-badge">📅</span>
+                    <h3>{day.day}</h3>
+                  </div>
+                  <ul className="meal-list">
+                    {day.meals.map((meal, i) => (
+                      <li key={i} className="meal-item">
+                        {meal}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="no-plan">
+              Aún no hay plan semanal cargado. Pronto verás aquí tus comidas 💪
+            </p>
+          )}
 
           <button className="button" onClick={handleLogout}>
             Cerrar sesión
