@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "./App.css";
 import bgImage from "./assets/vitalux-bg.jpg";
+import { db } from "./firebase";
 
 function App() {
   const [user, setUser] = useState(null);
