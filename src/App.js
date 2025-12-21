@@ -1,14 +1,22 @@
 import React, { useState } from "react";
 import "./App.css";
 import bgImage from "./assets/vitalux-bg.jpg";
-import { db } from "./firebase";
+
+import { auth } from "./firebase";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
 
 function App() {
   const [user, setUser] = useState(null);
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
 
-  // Plan "falso" de ejemplo para HOY (luego lo sacamos de base de datos)
+  // CAMBIA ESTE CORREO POR EL ADMIN QUE CREASTE EN FIREBASE
+  const ADMIN_EMAIL = "admin@vitalux.cl";
+
   const todayPlan = {
     dateLabel: "Plan de hoy",
     meals: [
@@ -18,7 +26,7 @@ function App() {
         title: "Yogurt griego + frutos rojos",
         description: "Alto en proteína, bajo en azúcar.",
         status: "ready",
-        statusText: "Listo"
+        statusText: "Listo",
       },
       {
         id: 2,
@@ -26,7 +34,7 @@ function App() {
         title: "Pollo Vitalux con arroz integral",
         description: "Porción controlada, ideal para energía estable.",
         status: "ready",
-        statusText: "Listo"
+        statusText: "Listo",
       },
       {
         id: 3,
@@ -34,37 +42,60 @@ function App() {
         title: "Salmón al horno + ensalada verde",
         description: "Omega 3, antiinflamatorio y liviano para dormir.",
         status: "pending",
-        statusText: "Pendiente"
-      }
+        statusText: "Pendiente",
+      },
     ],
     motivation:
-      "Hoy no tienes que pensar qué cocinar, solo seguir el plan. Una comida a la vez y listo 💪."
+      "Hoy no tienes que pensar qué cocinar, solo seguir el plan. Una comida a la vez y listo 💪.",
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setAuthError("");
 
-    // Temporal:
-    // si el código es "vitaluxadmin" => admin, si no => cliente
-    if (code === "vitaluxadmin") {
-      setUser({ role: "admin", email });
-    } else {
-      setUser({ role: "cliente", email });
+    if (!email || !password) {
+      setAuthError("Completa correo y contraseña.");
+      return;
     }
 
-    setCode("");
+    try {
+      // Intentar iniciar sesión
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const loggedEmail = cred.user.email || email;
+      const role = loggedEmail === ADMIN_EMAIL ? "admin" : "cliente";
+      setUser({ role, email: loggedEmail });
+    } catch (error) {
+      // Si no existe, creamos la cuenta
+      if (error.code === "auth/user-not-found") {
+        try {
+          const cred = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+          const newEmail = cred.user.email || email;
+          const role = newEmail === ADMIN_EMAIL ? "admin" : "cliente";
+          setUser({ role, email: newEmail });
+        } catch (error2) {
+          setAuthError("No se pudo crear la cuenta: " + error2.message);
+        }
+      } else {
+        setAuthError("Error al iniciar sesión: " + error.message);
+      }
+    }
   };
 
   const handleLogout = () => {
     setUser(null);
     setEmail("");
-    setCode("");
+    setPassword("");
+    setAuthError("");
   };
 
   return (
     <div
       className="app"
-      style={{ backgroundImage: `url(${bgImage})` }}
+      style={{ backgroundImage: ⁠ url(${bgImage}) ⁠ }}
     >
       <div className="landing-card">
         {!user && (
@@ -74,11 +105,15 @@ function App() {
 
             <h2 className="section-title">Ingresar</h2>
             <p className="helper-text">
-              Si usas el código <strong>vitaluxadmin</strong> entrarás como
-              <strong> administrador</strong>. Cualquier otro código entra como
-              <strong> cliente</strong>. Esto es solo temporal mientras
-              desarrollamos el sistema real.
+              Usa tu correo y una contraseña. Si es tu primera vez, crearemos tu
+              cuenta automáticamente.
             </p>
+
+            {authError && (
+              <p className="error-text">
+                {authError}
+              </p>
+            )}
 
             <form onSubmit={handleSubmit} className="login-form">
               <label className="field">
@@ -93,12 +128,13 @@ function App() {
               </label>
 
               <label className="field">
-                <span>Código de acceso</span>
+                <span>Contraseña</span>
                 <input
                   type="password"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="vitaluxadmin o cualquier código"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="Mínimo 6 caracteres"
                 />
               </label>
 
@@ -133,7 +169,7 @@ function App() {
                         <div className="meal-note">{meal.description}</div>
                       </div>
                       <span
-                        className={`meal-badge meal-badge-${meal.status}`}
+                        className={⁠ meal-badge meal-badge-${meal.status} ⁠}
                       >
                         {meal.statusText}
                       </span>
@@ -151,7 +187,7 @@ function App() {
                 <p>
                   Aquí construiremos el{" "}
                   <strong>panel de administración</strong> para cargar minutas,
-                  recetas y clientes.
+                  recetas y clientes desde Firebase.
                 </p>
               </div>
             )}
