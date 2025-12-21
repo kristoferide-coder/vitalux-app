@@ -1,208 +1,198 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  onAuthStateChanged,
   signOut,
 } from "firebase/auth";
-import { auth, db } from "./firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
+import { auth, db } from "./firebase";
 
 function App() {
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  const [clientEmail, setClientEmail] = useState("");
+  const [planEmail, setPlanEmail] = useState("");
+  const [planText, setPlanText] = useState("");
   const [plan, setPlan] = useState("");
-  const [planCliente, setPlanCliente] = useState("");
-  const [loadingPlan, setLoadingPlan] = useState(false);
-  const [mensaje, setMensaje] = useState("");
 
-  // 🔥 Detectar sesión
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (usuario) => {
-      if (usuario) {
-        setUser(usuario);
-
-        if (usuario.email === "vitaluxfit@gmail.com") {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
-          obtenerPlanCliente(usuario.email);
-        }
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        await determineRole(firebaseUser.email);
       } else {
         setUser(null);
+        setUserRole(null);
       }
     });
 
-    return () => unsub();
+    return () => unsubscribe();
   }, []);
 
-  // 🔐 Login
-  async function login() {
-    setMensaje("");
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      if (err.code === "auth/user-not-found") {
-        // Si no existe → lo creamos
-        await createUserWithEmailAndPassword(auth, email, password);
-      } else {
-        setMensaje("Error al iniciar sesión");
-      }
+  // 🔥 Determinar si es ADMIN o CLIENTE
+  const determineRole = async (email) => {
+    if (email === "vitaluxfit@gmail.com") {
+      setUserRole("admin");
+      return;
     }
-  }
 
-  // 🔓 Logout
-  async function logout() {
-    await signOut(auth);
-    setUser(null);
-    setIsAdmin(false);
-  }
-
-  // 🧑‍🍳 Guardar plan para cliente
-  async function guardarPlan() {
-    setMensaje("Guardando...");
-    try {
-      await setDoc(doc(db, "clients", clientEmail), {
-        plan: plan,
-      });
-      setMensaje("Plan guardado correctamente.");
-    } catch (err) {
-      setMensaje("Error al guardar el plan.");
-    }
-  }
-
-  // 👤 Cliente obtiene su plan
-  async function obtenerPlanCliente(emailUser) {
-    setLoadingPlan(true);
-    const ref = doc(db, "clients", emailUser);
+    const ref = doc(db, "clientes", email);
     const snap = await getDoc(ref);
 
     if (snap.exists()) {
-      setPlanCliente(snap.data().plan);
+      setPlan(snap.data().plan);
+      setUserRole("cliente");
     } else {
-      setPlanCliente("");
+      setUserRole("cliente");
+    }
+  };
+
+  // 🔥 Login / Registro
+  const handleLogin = async () => {
+    try {
+      let userCred;
+      try {
+        userCred = await signInWithEmailAndPassword(auth, email, password);
+      } catch {
+        userCred = await createUserWithEmailAndPassword(auth, email, password);
+      }
+
+      await determineRole(userCred.user.email);
+    } catch (error) {
+      alert("Error al iniciar sesión: " + error.message);
+    }
+  };
+
+  // 🔥 Logout
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
+
+  // 🔥 Guardar plan en Firestore
+  const handleSavePlan = async () => {
+    if (!planEmail || !planText) {
+      alert("Completa correo y plan.");
+      return;
     }
 
-    setLoadingPlan(false);
-  }
+    try {
+      await setDoc(doc(db, "clientes", planEmail), {
+        plan: planText,
+      });
 
-  // 🧾 Ordenar plan en tarjetitas bonitas
-  const seccionesPlan = useMemo(() => {
-    if (!planCliente) return [];
-
-    const resultado = [];
-
-    planCliente.split("\n").forEach((linea) => {
-      const texto = linea.trim();
-      if (!texto) return;
-
-      const [tituloBruto, ...resto] = texto.split(":");
-      if (!resto.length) {
-        resultado.push({ titulo: "", texto });
-      } else {
-        resultado.push({
-          titulo: tituloBruto.trim(),
-          texto: resto.join(":").trim(),
-        });
-      }
-    });
-
-    return resultado;
-  }, [planCliente]);
+      alert("Plan guardado correctamente.");
+    } catch (error) {
+      alert("Error guardando plan: " + error.message);
+    }
+  };
 
   return (
     <div className="app-container">
       {!user && (
-        <div className="login-box">
-          <h1>VITALUXFIT</h1>
+        <div className="landing-card">
+          <h1 className="brand-title">VITALUXFIT</h1>
           <p>Tu vitalidad, nuestro compromiso.</p>
 
-          {mensaje && <p>{mensaje}</p>}
-
           <input
-            type="email"
+            className="input"
             placeholder="Correo"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
           <input
-            type="password"
+            className="input"
             placeholder="Contraseña"
+            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button onClick={login}>Entrar</button>
+          <button className="button" onClick={handleLogin}>
+            Entrar
+          </button>
         </div>
       )}
 
-      {user && isAdmin && (
-        <div className="panel-box">
-          <h1>VITALUXFIT</h1>
+      {/* PANEL ADMIN */}
+      {user && userRole === "admin" && (
+        <div className="landing-card">
+          <h1 className="brand-title">VITALUXFIT</h1>
           <p>Sesión iniciada como Administrador.</p>
 
           <h2>Panel Admin</h2>
-          <p>
-            Aquí podrás crear y actualizar el plan del día de cada cliente.
-          </p>
+          <p>Crear o actualizar el plan diario del cliente.</p>
 
           <input
-            type="email"
+            className="input"
             placeholder="Correo del cliente"
-            value={clientEmail}
-            onChange={(e) => setClientEmail(e.target.value)}
+            value={planEmail}
+            onChange={(e) => setPlanEmail(e.target.value)}
           />
 
           <textarea
-            placeholder="Plan del día"
-            value={plan}
-            onChange={(e) => setPlan(e.target.value)}
-          ></textarea>
+            className="textarea"
+            placeholder="Escribe el plan aquí..."
+            value={planText}
+            onChange={(e) => setPlanText(e.target.value)}
+          />
 
-          <button onClick={guardarPlan}>Guardar plan</button>
+          <button className="button" onClick={handleSavePlan}>
+            Guardar plan
+          </button>
 
-          {mensaje && <p>{mensaje}</p>}
-
-          <button onClick={logout}>Cerrar sesión</button>
+          <button className="button secondary" onClick={handleLogout}>
+            Cerrar sesión
+          </button>
         </div>
       )}
 
-      {user && !isAdmin && (
-        <div className="panel-box">
-          <h1>VITALUXFIT</h1>
-          <p>Sesión iniciada como Cliente.</p>
+      {/* PANEL CLIENTE BONITO */}
+      {user && userRole === "cliente" && (
+        <div className="landing-card client-panel">
+          <h1 className="brand-title">VITALUXFIT</h1>
+          <p className="session-label">Sesión iniciada como Cliente.</p>
 
-          <h2>Tu plan de hoy</h2>
+          <h2 className="section-title">Tu plan de hoy</h2>
+          <p className="client-email">Hola, {user.email}</p>
 
-          <p>Hola, {user.email}</p>
+          <div className="plan-cards">
+            {plan &&
+              plan
+                .split("\n")
+                .filter((line) => line.trim() !== "")
+                .map((line, index) => {
+                  const lower = line.toLowerCase();
+                  let tag = "✨ Detalle";
 
-          {loadingPlan && <p>Cargando tu plan...</p>}
+                  if (lower.startsWith("desayuno")) tag = "🥣 Desayuno";
+                  else if (lower.startsWith("almuerzo")) tag = "🍗 Almuerzo";
+                  else if (lower.startsWith("cena")) tag = "🍽 Cena";
+                  else if (lower.startsWith("snack") || lower.startsWith("colación"))
+                    tag = "🍎 Snack";
 
-          {!loadingPlan && !planCliente && (
-            <p>
-              Aún no tienes un plan asignado. Cuando tu coach lo suba,
-              aparecerá aquí.
-            </p>
-          )}
+                  const cleanText = line.replace(/^[^:]+:\s*/, "");
 
-          {!loadingPlan && planCliente && (
-            <div className="plan-container">
-              {seccionesPlan.map((item, index) => (
-                <div key={index} className="plan-item">
-                  {item.titulo && <h3>{item.titulo}</h3>}
-                  <p>{item.texto}</p>
-                </div>
-              ))}
-            </div>
-          )}
+                  return (
+                    <div key={index} className="plan-card">
+                      <span className="plan-tag">{tag}</span>
+                      <p className="plan-text">{cleanText}</p>
+                    </div>
+                  );
+                })}
 
-          <button onClick={logout}>Cerrar sesión</button>
+            {!plan && (
+              <p className="no-plan">
+                Aún no hay plan cargado. Pronto verás aquí tus comidas 💪
+              </p>
+            )}
+          </div>
+
+          <button className="button" onClick={handleLogout}>
+            Cerrar sesión
+          </button>
         </div>
       )}
     </div>
