@@ -1,4 +1,4 @@
-mport React, { useState } from "react";
+import React, { useState } from "react";
 import "./App.css";
 import { auth, db } from "./firebase";
 import {
