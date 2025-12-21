@@ -15,7 +15,7 @@ function App() {
   const [authError, setAuthError] = useState("");
 
   // CAMBIA ESTE CORREO POR EL ADMIN QUE CREASTE EN FIREBASE
-  const ADMIN_EMAIL = "admin@vitalux.cl";
+  const ADMIN_EMAIL = "vitaluxfit@gmail.com";
 
   const todayPlan = {
     dateLabel: "Plan de hoy",
