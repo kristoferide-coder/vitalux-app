@@ -14,7 +14,7 @@ function App() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
 
-  // CAMBIA ESTE CORREO POR EL ADMIN QUE CREASTE EN FIREBASE
+  // ESTE ES TU ADMIN REAL
   const ADMIN_EMAIL = "vitaluxfit@gmail.com";
 
   const todayPlan = {
@@ -65,7 +65,7 @@ function App() {
       const role = loggedEmail === ADMIN_EMAIL ? "admin" : "cliente";
       setUser({ role, email: loggedEmail });
     } catch (error) {
-      // Si no existe, creamos la cuenta
+      // Si no existe el usuario, lo creamos
       if (error.code === "auth/user-not-found") {
         try {
           const cred = await createUserWithEmailAndPassword(
@@ -93,10 +93,7 @@ function App() {
   };
 
   return (
-    <div
-      className="app"
-      style={{ backgroundImage: ⁠ url(${bgImage}) ⁠ }}
-    >
+    <div className="app" style={{ backgroundImage: ⁠ url(${bgImage}) ⁠ }}>
       <div className="landing-card">
         {!user && (
           <>
@@ -109,11 +106,7 @@ function App() {
               cuenta automáticamente.
             </p>
 
-            {authError && (
-              <p className="error-text">
-                {authError}
-              </p>
-            )}
+            {authError && <p className="error-text">{authError}</p>}
 
             <form onSubmit={handleSubmit} className="login-form">
               <label className="field">
@@ -202,4 +195,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;     
