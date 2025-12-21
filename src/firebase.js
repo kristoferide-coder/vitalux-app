@@ -7,12 +7,13 @@ import { getFirestore } from "firebase/firestore";
 
 // 👇 Deja aquí tal cual los datos que te dio Firebase
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
+  apiKey: "AIzaSyAVdPrM2vkZPrnhVGx2diAkl6W1m6Vv41s",
   authDomain: "vitaluxfit-app.firebaseapp.com",
   projectId: "vitaluxfit-app",
-  storageBucket: "vitaluxfit-app.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID"
+  storageBucket: "vitaluxfit-app.firebasestorage.app",
+  messagingSenderId: "401439609686",
+  appId: "1:401439609686:web:3a0ae345c8a9b1545f3cf7",
+  measurementId: "G-0LSTT7DXJ7"
 };
 
 // Inicializar Firebase
