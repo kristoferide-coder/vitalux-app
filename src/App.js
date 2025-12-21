@@ -1,44 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import { auth, db } from "./firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
+// 🔹 Correo que será admin en Vitalux
+const ADMIN_EMAIL = "vitaluxfit@gmail.com";
+
+// 🔹 Componente principal
 function App() {
-  const [user, setUser] = useState(null); // { email, role: "admin" | "cliente" }
+  const [user, setUser] = useState(null); // { email, role }
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // Admin
-  const [clientEmail, setClientEmail] = useState("");
-  const [planText, setPlanText] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  // Cliente
-  const [clientPlan, setClientPlan] = useState("");
-  const [loadingPlan, setLoadingPlan] = useState(false);
-
-  const [message, setMessage] = useState(""); // mensajes de éxito
-  const [error, setError] = useState(""); // mensajes de error
-
-  const ADMIN_EMAIL = "vitaluxfit@gmail.com";
-
-  // 🔐 LOGIN
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError("");
-    setMessage("");
+    setErrorMsg("");
 
     try {
-      // Intentar iniciar sesión
       let cred;
+
+      // Intentar iniciar sesión
       try {
         cred = await signInWithEmailAndPassword(auth, email, password);
       } catch (err) {
-        // Si el usuario no existe, lo creamos como cliente
+        // Si el usuario no existe, lo creamos
         if (err.code === "auth/user-not-found") {
           cred = await createUserWithEmailAndPassword(auth, email, password);
         } else {
@@ -46,82 +37,24 @@ function App() {
         }
       }
 
-      const emailLower = email.toLowerCase();
-      const role = emailLower === ADMIN_EMAIL ? "admin" : "cliente";
+      const loggedEmail = cred.user.email;
+      const role = loggedEmail === ADMIN_EMAIL ? "admin" : "cliente";
 
-      setUser({ email: emailLower, role });
-
-      // Si es cliente, cargar su plan desde Firestore
-      if (role === "cliente") {
-        setLoadingPlan(true);
-        const ref = doc(db, "clients", emailLower);
-        const snap = await getDoc(ref);
-
-        if (snap.exists()) {
-          const data = snap.data();
-          setClientPlan(data.plan || "Aún no tienes un plan cargado para hoy.");
-        } else {
-          setClientPlan("Aún no tienes un plan cargado para hoy.");
-        }
-        setLoadingPlan(false);
-      }
-
-      // Limpiar campos de login
+      setUser({ email: loggedEmail, role });
       setEmail("");
       setPassword("");
     } catch (err) {
       console.error(err);
-      setError("Error al iniciar sesión: " + (err.message || ""));
+      setErrorMsg("Error al iniciar sesión: " + (err.message || ""));
     }
   };
 
-  // 🚪 LOGOUT
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOut(auth);
     setUser(null);
-    setClientEmail("");
-    setPlanText("");
-    setClientPlan("");
-    setMessage("");
-    setError("");
   };
 
-  // 💾 ADMIN: GUARDAR PLAN EN FIRESTORE
-  const handleSavePlan = async () => {
-    setError("");
-    setMessage("");
-
-    const emailTrimmed = clientEmail.trim().toLowerCase();
-
-    if (!emailTrimmed) {
-      setError("Debes escribir el correo del cliente.");
-      return;
-    }
-
-    if (!planText.trim()) {
-      setError("El plan del día no puede estar vacío.");
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      const ref = doc(db, "clients", emailTrimmed);
-      await setDoc(ref, {
-        plan: planText.trim(),
-        updatedAt: new Date().toISOString(),
-      });
-
-      setSaving(false);
-      setMessage("✅ Plan guardado correctamente.");
-    } catch (err) {
-      console.error(err);
-      setSaving(false);
-      setError("Error al guardar el plan: " + (err.message || ""));
-    }
-  };
-
-  // 🔁 Render según estado
-  // 1) Si NO hay usuario → pantalla de login
+  // 🔹 Vista según rol
   if (!user) {
     return (
       <div className="app">
@@ -130,144 +63,206 @@ function App() {
           <p>Tu vitalidad, nuestro compromiso.</p>
 
           <h2>Ingresar</h2>
-          <p style={{ fontSize: "0.9rem", marginBottom: "12px" }}>
+          <p>
             Usa tu correo y una contraseña. Si es tu primera vez, crearemos tu
             cuenta automáticamente.
           </p>
 
-          {error && (
-            <p style={{ color: "#ffb3b3", fontSize: "0.9rem" }}>{error}</p>
-          )}
+          {errorMsg && <p style={{ color: "#ffb3b3" }}>{errorMsg}</p>}
 
-          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ textAlign: "left", fontSize: "0.9rem" }}>
+          <form onSubmit={handleLogin}>
+            <label>
               Correo
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="tucorreo@ejemplo.com"
+              />
             </label>
-            <input
-              type="email"
-              placeholder="tucorreo@ejemplo.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
 
-            <label style={{ textAlign: "left", fontSize: "0.9rem" }}>
+            <label>
               Contraseña
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+              />
             </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
 
-            <button type="submit" className="primary-button">
-              Entrar
-            </button>
+            <button type="submit">Entrar</button>
           </form>
         </div>
       </div>
     );
   }
 
-  // 2) Si es ADMIN → panel admin
+  // Admin
   if (user.role === "admin") {
-    return (
-      <div className="app">
-        <div className="landing-card">
-          <h1>VITALUXFIT</h1>
-          <p>Sesión iniciada como Administrador.</p>
-
-          <h2>Panel Admin</h2>
-          <p style={{ fontSize: "0.9rem", marginBottom: "12px" }}>
-            Aquí podrás crear y actualizar el plan del día de cada cliente.
-          </p>
-
-          {error && (
-            <p style={{ color: "#ffb3b3", fontSize: "0.9rem" }}>{error}</p>
-          )}
-          {message && (
-            <p style={{ color: "#a5ffb3", fontSize: "0.9rem" }}>{message}</p>
-          )}
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ textAlign: "left", fontSize: "0.9rem" }}>
-              Correo del cliente
-            </label>
-            <input
-              type="email"
-              placeholder="cliente@ejemplo.com"
-              value={clientEmail}
-              onChange={(e) => setClientEmail(e.target.value)}
-            />
-
-            <label style={{ textAlign: "left", fontSize: "0.9rem" }}>
-              Plan del día
-            </label>
-            <textarea
-              rows={6}
-              placeholder={⁠ Desayuno: ...\nAlmuerzo: ...\nCena: ... ⁠}
-              value={planText}
-              onChange={(e) => setPlanText(e.target.value)}
-            />
-
-            <button
-              type="button"
-              className="primary-button"
-              onClick={handleSavePlan}
-              disabled={saving}
-            >
-              {saving ? "Guardando..." : "Guardar plan"}
-            </button>
-          </div>
-
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={handleLogout}
-            style={{ marginTop: "16px" }}
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      </div>
-    );
+    return <AdminPanel user={user} onLogout={handleLogout} />;
   }
 
-  // 3) Si es CLIENTE → ver su plan del día
+  // Cliente
+  return <ClientPanel user={user} onLogout={handleLogout} />;
+}
+
+// 🔹 Panel Admin: guarda plan del día en Firestore
+function AdminPanel({ user, onLogout }) {
+  const [clientEmail, setClientEmail] = useState("");
+  const [planText, setPlanText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [savedMsg, setSavedMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setSavedMsg("");
+    setErrorMsg("");
+
+    try {
+      const emailKey = clientEmail.trim().toLowerCase();
+
+      if (!emailKey) {
+        setErrorMsg("Debes ingresar un correo de cliente.");
+        setSaving(false);
+        return;
+      }
+
+      await setDoc(
+        doc(db, "clientes", emailKey),
+        { plan: planText },
+        { merge: true }
+      );
+
+      setSavedMsg("✅ Plan guardado correctamente.");
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("❌ Error al guardar el plan.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="app">
+      <div className="landing-card">
+        <h1>VITALUXFIT</h1>
+        <p>Sesión iniciada como Administrador.</p>
+
+        <h2>Panel Admin</h2>
+        <p>
+          Aquí podrás crear y actualizar el plan del día de cada cliente.
+        </p>
+
+        {errorMsg && <p style={{ color: "#ffb3b3" }}>{errorMsg}</p>}
+        {savedMsg && <p style={{ color: "#b3ffb3" }}>{savedMsg}</p>}
+
+        <form onSubmit={handleSave}>
+          <label>
+            Correo del cliente
+            <input
+              type="email"
+              value={clientEmail}
+              onChange={(e) => setClientEmail(e.target.value)}
+              placeholder="cliente@ejemplo.com"
+              required
+            />
+          </label>
+
+          <label>
+            Plan del día
+            <textarea
+              rows={6}
+              value={planText}
+              onChange={(e) => setPlanText(e.target.value)}
+              placeholder="Desayuno: ...&#10;Almuerzo: ...&#10;Cena: ..."
+              required
+            />
+          </label>
+
+          <button type="submit" disabled={saving}>
+            {saving ? "Guardando..." : "Guardar plan"}
+          </button>
+        </form>
+
+        <button className="secondary" onClick={onLogout}>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 🔹 Panel Cliente: lee plan de Firestore y lo muestra
+function ClientPanel({ user, onLogout }) {
+  const [plan, setPlan] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    const fetchPlan = async () => {
+      try {
+        setLoading(true);
+        setErrorMsg("");
+
+        const ref = doc(db, "clientes", user.email.toLowerCase());
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          const data = snap.data();
+          setPlan(data.plan || "");
+        } else {
+          setPlan("");
+        }
+      } catch (err) {
+        console.error(err);
+        setErrorMsg("No pudimos cargar tu plan de hoy.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlan();
+  }, [user.email]);
+
   return (
     <div className="app">
       <div className="landing-card">
         <h1>VITALUXFIT</h1>
         <p>Sesión iniciada como Cliente.</p>
 
-        <h2>
-          Hola, {user.email}{" "}
-          <span role="img" aria-label="saludo">
-            👋
-          </span>
-        </h2>
+        <h2>Tu plan de hoy</h2>
+        <p>Hola, {user.email}</p>
 
-        <h3>Plan de hoy</h3>
+        {loading && <p>Cargando tu plan...</p>}
+        {errorMsg && <p style={{ color: "#ffb3b3" }}>{errorMsg}</p>}
 
-        {loadingPlan ? (
-          <p>Cargando tu plan...</p>
-        ) : (
-          <p style={{ whiteSpace: "pre-line" }}>{clientPlan}</p>
+        {!loading && !errorMsg && (
+          <>
+            {plan ? (
+              <pre
+                style={{
+                  whiteSpace: "pre-wrap",
+                  textAlign: "left",
+                  marginTop: "12px",
+                }}
+              >
+                {plan}
+              </pre>
+            ) : (
+              <p>
+                Aún no hay un plan asignado para hoy. Avísale a tu coach para
+                que lo cargue. 💪
+              </p>
+            )}
+          </>
         )}
 
-        <p style={{ marginTop: "16px", fontSize: "0.9rem" }}>
-          Hoy no tienes que pensar qué cocinar, solo seguir el plan.  
-          Una comida a la vez y listo 💪
-        </p>
-
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={handleLogout}
-          style={{ marginTop: "16px" }}
-        >
+        <button className="secondary" onClick={onLogout}>
           Cerrar sesión
         </button>
       </div>
