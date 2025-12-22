@@ -1,285 +1,145 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import "./firebase";
 
-// 👉 Función para convertir el texto en días + comidas
-const parseWeeklyPlan = (planStr) => {
-  if (!planStr) return [];
-
-  const DAYS = [
-    "lunes",
-    "martes",
-    "miércoles",
-    "miercoles",
-    "jueves",
-    "viernes",
-    "sábado",
-    "sabado",
-    "domingo",
-  ];
-
-  const lines = planStr
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l !== "");
-
-  const result = [];
-  let currentDay = null;
-  let currentMeals = [];
-
-  const pushDay = () => {
-    if (currentDay) {
-      result.push({
-        day: currentDay,
-        meals: [...currentMeals],
-      });
-    }
-    currentDay = null;
-    currentMeals = [];
-  };
-
-  lines.forEach((line) => {
-    const lower = line.toLowerCase();
-
-    const foundDay = DAYS.find((d) => lower.startsWith(d));
-    if (foundDay) {
-      // Nueva sección de día
-      pushDay();
-      // Guardamos el texto del día tal como lo escribiste (ej: "Lunes:" o "Lunes - Semana de definición")
-      currentDay = line.replace(/[:\-]+$/, "");
-    } else {
-      currentMeals.push(line);
-    }
-  });
-
-  pushDay();
-  return result;
+const weekMenu = {
+  lunes: {
+    desayuno: "Omelette de tomate y queso",
+    almuerzo: "Zucchini de carne",
+    cena: "Alitas de pollo con ensalada de lechuga y palta",
+  },
+  martes: {
+    desayuno: "Avena + berries",
+    almuerzo: "Pollo + arroz + ensalada",
+    cena: "Salmón + ensalada verde",
+  },
+  miércoles: {
+    desayuno: "Pan integral + huevo",
+    almuerzo: "Pastel de papas light",
+    cena: "Merluza + verduras salteadas",
+  },
+  jueves: {
+    desayuno: "Yogurt + frutas",
+    almuerzo: "Carne + puré rústico",
+    cena: "Sopa de verduras + pollo",
+  },
+  viernes: {
+    desayuno: "Huevos revueltos + pan integral",
+    almuerzo: "Pasta integral + pollo",
+    cena: "Tortilla de verduras",
+  },
+  sábado: {
+    desayuno: "Avena + mantequilla maní",
+    almuerzo: "Opcional libre controlado",
+    cena: "Proteína + ensalada",
+  },
+  domingo: {
+    desayuno: "Opcional libre controlado",
+    almuerzo: "Asado balanceado",
+    cena: "Ligera + proteína",
+  },
 };
 
-function App() {
+const daysOrder = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
+
+export default function App() {
+  const auth = getAuth();
   const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [planEmail, setPlanEmail] = useState("");
-  const [planText, setPlanText] = useState("");
-  const [plan, setPlan] = useState("");
+  const [selectedDay, setSelectedDay] = useState("lunes");
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(firebaseUser);
-        await determineRole(firebaseUser.email);
-      } else {
-        setUser(null);
-        setUserRole(null);
-        setPlan("");
-      }
+    const unsub = auth.onAuthStateChanged((u) => {
+      setUser(u);
+
+      // Detectar día actual
+      const today = new Date().toLocaleDateString("es-CL", { weekday: "long" }).toLowerCase();
+      if (daysOrder.includes(today)) setSelectedDay(today);
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
-  // 🔥 Determinar si es ADMIN o CLIENTE
-  const determineRole = async (userEmail) => {
-    if (userEmail === "vitaluxfit@gmail.com") {
-      setUserRole("admin");
-      return;
-    }
-
-    const ref = doc(db, "clientes", userEmail);
-    const snap = await getDoc(ref);
-
-    if (snap.exists()) {
-      const data = snap.data();
-      setPlan(data.plan || "");
-      setUserRole("cliente");
-    } else {
-      setPlan("");
-      setUserRole("cliente");
-    }
+  const login = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
   };
 
-  // 🔥 Login / Registro
-  const handleLogin = async () => {
-    try {
-      let userCred;
-      try {
-        userCred = await signInWithEmailAndPassword(auth, email, password);
-      } catch {
-        userCred = await createUserWithEmailAndPassword(auth, email, password);
-      }
-
-      await determineRole(userCred.user.email);
-    } catch (error) {
-      alert("Error al iniciar sesión: " + error.message);
-    }
-  };
-
-  // 🔥 Logout
-  const handleLogout = async () => {
+  const logout = async () => {
     await signOut(auth);
   };
 
-  // 🔥 Guardar plan en Firestore
-  const handleSavePlan = async () => {
-    if (!planEmail || !planText) {
-      alert("Completa correo y plan.");
-      return;
-    }
-
-    try {
-      await setDoc(doc(db, "clientes", planEmail), {
-        plan: planText,
-      });
-
-      alert("Plan guardado correctamente.");
-    } catch (error) {
-      alert("Error guardando plan: " + error.message);
-    }
-  };
-
-  // 👉 Parsear el plan a estructura semanal
-  const weeklyPlan = parseWeeklyPlan(plan);
-
   return (
-    <div className="app-container">
-      {/* ===== LOGIN ===== */}
-      {!user && (
-        <div className="landing-card">
-          <h1 className="brand-title">VITALUXFIT</h1>
-          <p>Tu vitalidad, nuestro compromiso.</p>
+    <div className="App">
+      <div className="app-shell">
+        {/* -------- HEADER -------- */}
+        <header className="app-header">
+          <div className="logo-circle">V</div>
 
-          <h2>Ingresar</h2>
-          <p className="helper-text">
-            Usa tu correo y una contraseña. Si es tu primera vez, crearemos tu cuenta
-            automáticamente.
-          </p>
+          <div className="brand-text">
+            <span className="brand-name">VitaluxFit</span>
+            <span className="brand-tagline">Tu vitalidad, nuestro compromiso</span>
+          </div>
 
-          <input
-            className="input"
-            placeholder="Correo"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          {user && <div className="user-chip">Cliente</div>}
+        </header>
 
-          <input
-            className="input"
-            placeholder="Contraseña"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+        {/* -------- CUERPO -------- */}
+        <div className="app-body">
 
-          <button className="button" onClick={handleLogin}>
-            Entrar
-          </button>
-        </div>
-      )}
+          {!user ? (
+            <>
+              <h1>Bienvenido</h1>
+              <p>Inicia sesión para ver tu planificación Vitalux.</p>
 
-      {/* ===== PANEL ADMIN ===== */}
-      {user && userRole === "admin" && (
-        <div className="landing-card">
-          <h1 className="brand-title">VITALUXFIT</h1>
-          <p>Sesión iniciada como Administrador.</p>
-
-          <h2>Panel Admin</h2>
-          <p>
-            Aquí podrás crear y actualizar el <strong>plan semanal</strong> de cada cliente.
-          </p>
-          <p className="helper-text">
-            Formato sugerido:
-            <br />
-            Lunes:
-            <br />
-            Desayuno: ...
-            <br />
-            Almuerzo: ...
-            <br />
-            Cena: ...
-          </p>
-
-          <input
-            className="input"
-            placeholder="Correo del cliente (igual que en su login)"
-            value={planEmail}
-            onChange={(e) => setPlanEmail(e.target.value)}
-          />
-
-          <textarea
-            className="textarea"
-            placeholder={`Ejemplo:
-
-Lunes:
-Desayuno: ...
-Almuerzo: ...
-Cena: ...
-
-Martes:
-Desayuno: ...
-Almuerzo: ...
-Cena: ...
-`}
-            value={planText}
-            onChange={(e) => setPlanText(e.target.value)}
-          />
-
-          <button className="button" onClick={handleSavePlan}>
-            Guardar plan semanal
-          </button>
-
-          <button className="button secondary" onClick={handleLogout}>
-            Cerrar sesión
-          </button>
-        </div>
-      )}
-
-      {/* ===== PANEL CLIENTE CON SEMANA COMPLETA ===== */}
-      {user && userRole === "cliente" && (
-        <div className="landing-card client-panel">
-          <h1 className="brand-title">VITALUXFIT</h1>
-          <p className="session-label">Sesión iniciada como Cliente.</p>
-
-          <h2 className="section-title">Tu semana Vitalux</h2>
-          <p className="client-email">Hola, {user.email}</p>
-
-          {weeklyPlan.length > 0 ? (
-            <div className="week-grid">
-              {weeklyPlan.map((day, index) => (
-                <div key={index} className="plan-card day-card">
-                  <div className="day-header">
-                    <span className="day-badge">📅</span>
-                    <h3>{day.day}</h3>
-                  </div>
-                  <ul className="meal-list">
-                    {day.meals.map((meal, i) => (
-                      <li key={i} className="meal-item">
-                        {meal}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+              <button onClick={login}>
+                Iniciar sesión con Google
+              </button>
+            </>
           ) : (
-            <p className="no-plan">
-              Aún no hay plan semanal cargado. Pronto verás aquí tus comidas 💪
-            </p>
-          )}
+            <>
+              <h1>Sesión iniciada</h1>
+              <h2>Tu semana Vitalux</h2>
 
-          <button className="button" onClick={handleLogout}>
-            Cerrar sesión
-          </button>
+              <p>Hola, <strong>{user.email}</strong></p>
+
+              {/* ---- Layout semana ---- */}
+              <div className="week-layout">
+
+                {/* Sidebar días */}
+                <div className="week-sidebar">
+                  {daysOrder.map((day) => (
+                    <button
+                      key={day}
+                      className={`week-day-button ${
+                        selectedDay === day ? "week-day-button--active" : ""
+                      }`}
+                      onClick={() => setSelectedDay(day)}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Panel del día */}
+                <div className="week-main">
+                  <h3>{selectedDay}</h3>
+
+                  <div className="day-card">
+                    <p><strong>Desayuno:</strong> {weekMenu[selectedDay].desayuno}</p>
+                    <p><strong>Almuerzo:</strong> {weekMenu[selectedDay].almuerzo}</p>
+                    <p><strong>Cena:</strong> {weekMenu[selectedDay].cena}</p>
+                  </div>
+                </div>
+              </div>
+
+              <button onClick={logout} style={{ marginTop: 18 }}>
+                Cerrar sesión
+              </button>
+            </>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
-
-export default App;
